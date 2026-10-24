@@ -175,10 +175,32 @@ function playCustom(){
  a.muted=false;a.currentTime=0;
  return a.play().then(()=>true).catch(()=>false);
 }
-/* 温柔提醒：音乐 + 轻微震动 */
+/* 闹铃风格：叮铃铃的闹钟声（三角波，清脆有力，不依赖音乐文件） */
+function bell(freq,start,dur){
+ const c=getCtx();if(!c)return;
+ const o=c.createOscillator(),g=c.createGain();
+ o.type='triangle';o.frequency.value=freq;
+ const t=c.currentTime+start;
+ g.gain.setValueAtTime(0,t);
+ g.gain.linearRampToValueAtTime(.45,t+.01);
+ g.gain.exponentialRampToValueAtTime(.001,t+dur);
+ o.connect(g);g.connect(c.destination);
+ o.start(t);o.stop(t+dur);
+}
+/* 闹铃：每轮 6 声快速"叮叮叮"，轮间停顿，重复指定轮数 */
+function alarmBell(rounds){
+ const r=rounds||3;
+ for(let k=0;k<r;k++){
+   const base=k*1.8;
+   for(let i=0;i<6;i++){
+     bell(i%2?1046.5:1318.5, base+i*0.14, 0.13);
+   }
+ }
+}
+/* 提醒：闹铃 + 震动 */
 function alarm(times){
- playCustom().then(played=>{if(!played)chime(times||2);});
- if(navigator.vibrate)navigator.vibrate([500,200,500]);
+ alarmBell(times||3);
+ if(navigator.vibrate)navigator.vibrate([600,200,600,200,600]);
 }
 
 /* ---------------- 导航 ---------------- */
@@ -290,12 +312,10 @@ function renderTimer(){
  rp.oncanplay=()=>{diag.textContent=diagTxt();};
  setTimeout(()=>{diag.textContent=diagTxt();},1500);
  mainEl.querySelector('#testRing').onclick=()=>{
-   rp.muted=false;rp.volume=1;rp.currentTime=0;
-   const p=rp.play();
-   if(p&&p.then){
-     p.then(()=>{toast('🔔 正在播放提醒音乐');if(navigator.vibrate)navigator.vibrate([500,200,500]);diag.textContent=diagTxt()+' · ▶ 播放中';})
-      .catch(err=>{toast('播放被拦截：'+err.name);chime(2);diag.textContent=diagTxt()+' · ❌ '+err.name+': '+err.message;});
-   }
+   alarmBell(2);
+   if(navigator.vibrate)navigator.vibrate([600,200,600]);
+   toast('🔔 闹铃测试：叮铃铃');
+   diag.textContent=diagTxt();
  };
  globalTick=setInterval(()=>{
    let changed=false;
