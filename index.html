@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>手作店工作台</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="手作店">
+<meta name="theme-color" content="#f4a7c8">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href='data:application/manifest+json,{"name":"手作店工作台","short_name":"手作店","start_url":".","display":"standalone","background_color":"%23fdeef5","theme_color":"%23f4a7c8"}'>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f4a7c8'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E🧩%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f4a7c8'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E🧩%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg1:#fce3ee; --bg2:#fdeef5; --bg3:#fff5f9;
+  --card:#ffffff;
+  --pink:#f28ab4; --pinkD:#e8619e; --pinkL:#fbd4e5; --pinkXL:#fef1f6;
+  --purple:#8f7bb8; --text:#5a4457; --muted:#c58ba6; --danger:#e8619e; --ok:#63c9a8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);
+  background:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 45%,var(--bg3) 100%);background-attachment:fixed;
+  padding-bottom:env(safe-area-inset-bottom)}
+#app{display:flex;min-height:100vh}
+/* 左侧导航 */
+nav{width:64px;background:linear-gradient(180deg,#f6b8d3,#f2a3c5);display:flex;flex-direction:column;align-items:center;padding-top:12px;position:fixed;top:0;left:0;bottom:0;z-index:10;box-shadow:2px 0 10px rgba(232,97,158,.12)}
+nav button{background:none;border:none;color:#fff;width:100%;padding:12px 2px;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;text-shadow:0 1px 2px rgba(200,90,140,.3)}
+nav button .ico{font-size:20px;line-height:1}
+nav button.active{background:rgba(255,255,255,.35);color:#fff;border-radius:14px;margin:0 6px;width:auto;box-shadow:0 2px 6px rgba(220,110,160,.25)}
+main{flex:1;margin-left:64px;padding:14px 12px 34px;max-width:900px}
+h1{font-size:17px;margin:4px 0 4px;display:flex;align-items:center;gap:8px;color:var(--pinkD)}
+h1 .tag{font-size:12px;color:var(--muted);font-weight:normal}
+.card{background:var(--card);border-radius:20px;padding:14px;margin-bottom:14px;box-shadow:0 4px 14px rgba(240,150,190,.14);border:1.5px solid #fbdce9}
+.btn{border:none;border-radius:999px;padding:9px 16px;font-size:13px;background:linear-gradient(135deg,#f6a8c9,#ee7fb1);color:#fff;cursor:pointer;box-shadow:0 3px 8px rgba(238,127,177,.3)}
+.btn.gray{background:#f0dbe6;color:#b8799a;box-shadow:none}
+.btn.red{background:linear-gradient(135deg,#f593b6,#e8619e)}
+.btn.green{background:linear-gradient(135deg,#7fd6b8,#4db894)}
+.btn.sm{padding:6px 11px;font-size:12px}
+.btn.line{background:#fff;color:var(--purple);border:1.5px solid #e3d5f2;box-shadow:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select{border:1.5px solid #f3cfdf;border-radius:10px;padding:8px;font-size:14px;background:#fff;color:var(--text)}
+input:focus{outline:2px solid var(--pinkL)}
+.total{font-size:13px;color:var(--text)}
+.total b{color:var(--pinkD);font-size:15px}
+.big{font-size:28px;color:var(--pinkD);font-weight:bold}
+
+/* ===== 计时器 ===== */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.stat{background:#fff;border:1.5px solid #fbdce9;border-radius:16px;text-align:center;padding:12px 4px;box-shadow:0 3px 10px rgba(240,150,190,.1)}
+.stat .n{font-size:24px;font-weight:bold;color:var(--pinkD)}
+.stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+#timers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tcard{background:#fff;border-radius:20px;padding:14px 10px;text-align:center;box-shadow:0 4px 14px rgba(240,150,190,.15);border:1.5px solid #fbdce9;position:relative}
+.tcard.running{border-color:var(--pink)}
+.tcard.done60{border-color:var(--ok)}
+.tnum{position:absolute;top:10px;left:10px;background:var(--pinkXL);color:var(--pinkD);font-weight:bold;font-size:14px;border-radius:10px;padding:4px 10px}
+.tbadge{position:absolute;top:10px;right:10px;font-size:11px;color:var(--muted);background:var(--pinkXL);border-radius:999px;padding:3px 10px}
+.tbadge.run{color:#fff;background:linear-gradient(135deg,#f6a8c9,#ee7fb1)}
+.tbadge.ok{color:#fff;background:linear-gradient(135deg,#7fd6b8,#4db894)}
+.ttime{font-size:34px;font-weight:bold;margin:20px 0 4px;font-variant-numeric:tabular-nums;color:var(--pinkD);letter-spacing:1px}
+.ttime .sec{color:var(--purple);font-size:24px}
+.tsub{font-size:12px;color:var(--muted);margin-bottom:10px;border-top:1.5px dashed #f6cfe0;padding-top:8px}
+.tbtns{display:flex;gap:6px;justify-content:center;margin-bottom:8px}
+.tbtns .bstart{background:linear-gradient(135deg,#f6a8c9,#ee7fb1);border:none;border-radius:999px;padding:8px 18px;font-size:13px;color:#fff;box-shadow:0 3px 8px rgba(238,127,177,.3)}
+.tbtns .bpause{background:#fff;color:var(--pinkD);border:1.5px solid var(--pink);box-shadow:none}
+.tbtns .brst{background:#fff;color:var(--purple);border:1.5px solid #e3d5f2;box-shadow:none;border-radius:999px;padding:8px 12px;font-size:13px}
+.adj{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.adj button{border:none;border-radius:12px;padding:6px 2px;font-size:12px;background:var(--pinkXL);color:var(--pinkD)}
+.adj button:active{background:var(--pinkL)}
+.batch{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+th,td{border:1px solid #f6dcea;padding:6px 4px;text-align:center}
+th{background:var(--pinkXL);color:var(--pinkD);position:sticky;top:0}
+.scrollbox{max-height:60vh;overflow:auto;border-radius:14px;border:1.5px solid #fbdce9}
+.cb{width:20px;height:20px;accent-color:var(--pinkD)}
+.qty{width:60px;text-align:center;border:1.5px solid #f3cfdf;border-radius:8px;padding:4px;color:var(--pinkD);font-weight:bold}
+tr.filled td{background:var(--pinkXL)}
+
+/* ===== 营业额 ===== */
+.money-item{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.money-item input{flex:1;border-radius:999px}
+.money-item .amt{flex:0 0 90px}
+.money-item .idx{flex:0 0 24px;height:24px;line-height:24px;text-align:center;background:var(--pinkXL);color:var(--pinkD);border-radius:999px;font-size:12px}
+
+/* ===== 会员 ===== */
+.mtable td{padding:4px}
+.mtable input{width:100%;border:none;padding:6px 2px;font-size:13px}
+.mtable .sig{min-width:90px}
+#mSearch{flex:1;border-radius:999px}
+.toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);background:rgba(90,68,87,.92);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:99;display:none}
+@media (min-width:600px){
+  #timers{grid-template-columns:repeat(3,1fr)}
+  nav{width:80px} nav button{font-size:12px} main{margin-left:80px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="nav"></nav>
+<main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const LS='handmade_shop_v1';
+let DB=JSON.parse(localStorage.getItem(LS)||'{}');
+function save(){localStorage.setItem(LS,JSON.stringify(DB));}
+DB.timers=DB.timers||[]; for(let i=0;i<30;i++) if(!DB.timers[i]) DB.timers[i]={sec:0,running:false,over:false};
+DB.restock=DB.restock||{};
+DB.money=DB.money||{date:null,items:Array.from({length:8},()=>({name:'',amt:''})),month:{}};
+DB.members=DB.members||[];
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1800);}
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.3;o.start();o.stop(c.currentTime+.6);}catch(e){}}
+
+/* ---------------- 导航 ---------------- */
+const PAGES=[
+ {id:'timer',name:'拼豆计时器',ico:'⏱'},
+ {id:'restock',name:'色号补货表',ico:'🧩'},
+ {id:'money',name:'店铺营业额',ico:'💰'},
+ {id:'member',name:'会员充值',ico:'💳'},
+];
+const navEl=document.getElementById('nav'),mainEl=document.getElementById('main');
+let cur='timer';
+PAGES.forEach(p=>{
+ const b=document.createElement('button');
+ b.innerHTML=`<span class="ico">${p.ico}</span>${p.name}`;
+ b.onclick=()=>{cur=p.id;render();};
+ b.dataset.page=p.id; navEl.appendChild(b);
+});
+
+function render(){
+ navEl.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.page===cur));
+ clearInterval(globalTick);
+ if(cur==='timer')renderTimer();
+ if(cur==='restock')renderRestock();
+ if(cur==='money'){moneyDayReset();renderMoney();}
+ if(cur==='member')renderMember();
+}
+
+/* ---------------- 1. 拼豆计时器 ---------------- */
+let globalTick=null;
+function fmtHTML(s){const m=Math.floor(s/60),ss=s%60;
+ return String(m).padStart(3,'0')+':<span class="sec">'+String(ss).padStart(2,'0')+'</span>';}
+function renderTimer(){
+ const running=DB.timers.filter(t=>t.running).length;
+ const paused=DB.timers.filter(t=>!t.running&&t.sec>0&&Math.floor(t.sec/60)<720).length;
+ const done=DB.timers.filter(t=>Math.floor(t.sec/60)>=60).length;
+ mainEl.innerHTML=`
+ <h1>⏱ 拼豆计时器</h1>
+ <p style="font-size:13px;color:var(--muted);margin-bottom:12px">30个工位计时 · 满60分钟提醒 · 可累计至12小时</p>
+ <div class="stats">
+   <div class="stat"><div class="n">${running}</div><div class="l">运行中</div></div>
+   <div class="stat"><div class="n">${paused}</div><div class="l">已暂停</div></div>
+   <div class="stat"><div class="n">${done}</div><div class="l">已满60分</div></div>
+ </div>
+ <div class="batch">
+   <button class="btn green sm" id="allStart">▶ 全部开始</button>
+   <button class="btn sm" id="allPause">⏸ 全部暂停</button>
+   <button class="btn line sm" id="allReset">↺ 全部重置</button>
+ </div>
+ <div id="timers"></div>`;
+ const grid=mainEl.querySelector('#timers');
+ function paintCard(d,t,i){
+   const mins=Math.floor(t.sec/60);
+   const st=t.running?'run':(mins>=60?'ok':'wait');
+   const stTxt=t.running?'计时中':(mins>=60?'已满60分':'待开始');
+   d.className='tcard'+(t.running?' running':(mins>=60?' done60':''));
+   d.innerHTML=`<span class="tnum">${i+1}</span><span class="tbadge ${st}">${stTxt}</span>
+   <div class="ttime">${fmtHTML(t.sec)}</div>
+   <div class="tsub">已累计 ${mins} 分钟</div>
+   <div class="tbtns">
+     <button class="${t.running?'bpause':'bstart'}" data-a="toggle">${t.running?'⏸ 暂停':'▶ 开始'}</button>
+     <button class="brst" data-a="reset">↺</button>
+   </div>
+   <div class="adj">
+     <button data-adj="-5">-5分</button><button data-adj="5">+5分</button>
+     <button data-adj="-1">-1分</button><button data-adj="1">+1分</button>
+   </div>`;
+   d.querySelector('[data-a=toggle]').onclick=()=>{
+     if(!t.running){
+       if(mins>=720){toast('该位置已记录满12小时，请重置后重新开始');return;}
+       t.running=true;
+     } else t.running=false;
+     save();paintCard(d,t,i);
+   };
+   d.querySelector('[data-a=reset]').onclick=()=>{t.sec=0;t.running=false;t.over=false;save();paintCard(d,t,i);};
+   d.querySelectorAll('[data-adj]').forEach(b=>b.onclick=()=>{
+     const v=parseInt(b.dataset.adj)*60;
+     t.sec=Math.max(0,Math.min(720*60,t.sec+v));
+     if(t.sec>=720*60)t.running=false;
+     save();paintCard(d,t,i);
+   });
+ }
+ DB.timers.forEach((t,i)=>{
+   const d=document.createElement('div');paintCard(d,t,i);grid.appendChild(d);
+ });
+ mainEl.querySelector('#allStart').onclick=()=>{DB.timers.forEach(t=>{if(Math.floor(t.sec/60)<720)t.running=true;});save();renderTimer();};
+ mainEl.querySelector('#allPause').onclick=()=>{DB.timers.forEach(t=>t.running=false);save();renderTimer();};
+ mainEl.querySelector('#allReset').onclick=()=>{if(confirm('确认重置全部30个计时器？')){DB.timers.forEach(t=>{t.sec=0;t.running=false;t.over=false;});save();renderTimer();}};
+ globalTick=setInterval(()=>{
+   let changed=false;
+   DB.timers.forEach(t=>{
+     if(t.running){
+       t.sec++;changed=true;
+       const m=Math.floor(t.sec/60);
+       if(m>0&&t.sec%60===0&&m<=720){beep();toast('🔔 已满60分钟！继续记录中…');t.over=true;}
+       if(m>=720){t.running=false;toast('⏰ 已记录满12小时，自动停止');}
+     }
+   });
+   if(changed){save();
+     grid.querySelectorAll('.tcard').forEach((d,i)=>paintCard(d,DB.timers[i],i));
+     const st=mainEl.querySelectorAll('.stat .n');
+     if(st.length===3){
+       st[0].textContent=DB.timers.filter(t=>t.running).length;
+       st[1].textContent=DB.timers.filter(t=>!t.running&&t.sec>0&&Math.floor(t.sec/60)<720).length;
+       st[2].textContent=DB.timers.filter(t=>Math.floor(t.sec/60)>=60).length;
+     }
+   }
+ },1000);
+}
+
+/* ---------------- 2. 拼豆色号补货表 ---------------- */
+const SERIES={A:26,B:32,C:29,D:26,E:24,F:25,G:21,H:23,M:15};
+function allCodes(){const arr=[];for(const s in SERIES)for(let i=1;i<=SERIES[s];i++)arr.push(s+i);return arr;}
+function renderRestock(){
+ const codes=allCodes();
+ mainEl.innerHTML=`
+ <h1>🧩 拼豆色号补货表</h1>
+ <p style="font-size:13px;color:var(--muted);margin-bottom:12px">共221色 · 勾选或填数量即标记 · 自动汇总</p>
+ <div class="card row" style="justify-content:space-between">
+   <span class="total">已标记：<b id="rCount">0</b> 色</span>
+   <span class="total">总需补数量：<b id="rSum">0</b> 颗</span>
+ </div>
+ <div class="batch">
+   <button class="btn green sm" id="exportCsv">⬇ 导出表格(CSV)</button>
+   <button class="btn red sm" id="clearAll">一键清空填写内容</button>
+ </div>
+ <div class="card"><div class="scrollbox"><table id="rtable">
+   <thead><tr><th style="width:50px">勾选</th><th style="width:80px">色号</th><th>需补数量</th><th style="width:70px">备注</th></tr></thead>
+   <tbody></tbody></table></div></div>
+ <p style="font-size:12px;color:var(--muted);padding:0 4px">清空只清除填写内容，221色系列结构保留。</p>`;
+ const tb=mainEl.querySelector('tbody');
+ codes.forEach(c=>{
+   const r=DB.restock[c]||{};
+   const tr=document.createElement('tr');
+   if(r.check||r.qty)tr.className='filled';
+   tr.innerHTML=`<td><input type="checkbox" class="cb" ${r.check?'checked':''}></td>
+     <td><b>${c}</b></td>
+     <td><input class="qty" type="number" min="0" inputmode="numeric" placeholder="数量" value="${r.qty||''}"></td>
+     <td><input style="width:100%;border:none;font-size:12px" placeholder="备注" value="${r.note||''}"></td>`;
+   tr.querySelector('.cb').onchange=e=>{DB.restock[c]=DB.restock[c]||{};DB.restock[c].check=e.target.checked;save();tr.classList.toggle('filled',e.target.checked||(DB.restock[c].qty||'')!=='');updateCount();};
+   tr.querySelector('.qty').oninput=e=>{DB.restock[c]=DB.restock[c]||{};DB.restock[c].qty=e.target.value;save();tr.classList.toggle('filled',e.target.value!==''||DB.restock[c].check);updateCount();};
+   tr.children[3].querySelector('input').oninput=e=>{DB.restock[c]=DB.restock[c]||{};DB.restock[c].note=e.target.value;save();};
+   tb.appendChild(tr);
+ });
+ function updateCount(){
+   let f=0,sum=0;
+   codes.forEach(c=>{const r=DB.restock[c];if(r&&(r.check||r.qty)){f++;sum+=parseFloat(r.qty)||0;}});
+   mainEl.querySelector('#rCount').textContent=f;
+   mainEl.querySelector('#rSum').textContent=sum;
+ }
+ updateCount();
+ mainEl.querySelector('#clearAll').onclick=()=>{
+   if(!confirm('确认清空所有勾选、数量和备注？（221色系列结构保留）'))return;
+   DB.restock={};save();renderRestock();toast('已一键清空');
+ };
+ mainEl.querySelector('#exportCsv').onclick=()=>{
+   let csv='\uFEFF勾选,色号,需补数量,备注\n';
+   codes.forEach(c=>{const r=DB.restock[c]||{};csv+=`${r.check?'✓':''},${c},${r.qty||''},${(r.note||'').replace(/,/g,'，')}\n`;});
+   const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');
+   a.href=URL.createObjectURL(blob);a.download='拼豆补货表_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+   toast('已导出');
+ };
+}
+
+/* ---------------- 3. 店铺营业额 ---------------- */
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function moneyDayReset(){
+ const today=todayStr();
+ if(DB.money.date!==today){
+   const total=DB.money.items.reduce((s,it)=>s+(parseFloat(it.amt)||0),0);
+   const month=DB.money.date?DB.money.date.slice(0,7):null;
+   if(month&&total>0)DB.money.month[month]=(DB.money.month[month]||0)+total;
+   DB.money.items=DB.money.items.map(()=>({name:'',amt:''}));
+   DB.money.date=today;save();
+ }
+}
+function renderMoney(){
+ const items=DB.money.items;
+ const dayTotal=items.reduce((s,it)=>s+(parseFloat(it.amt)||0),0);
+ const monthKeys=Object.keys(DB.money.month).sort();
+ let monthHtml='';
+ if(monthKeys.length){
+   monthHtml=monthKeys.map(m=>`<div class="row" style="justify-content:space-between;border-bottom:1.5px dashed #f6dcea;padding:8px 0"><span>${m} 月度总营业额</span><b style="color:var(--pinkD)">¥${DB.money.month[m].toFixed(2)}</b></div>`).join('');
+ }else monthHtml='<p style="color:var(--muted);font-size:13px">暂无月度统计（每日记录跨天后自动归档）</p>';
+ mainEl.innerHTML=`
+ <h1>💰 店铺营业额</h1>
+ <p style="font-size:13px;color:var(--muted);margin-bottom:12px">当天 ${todayStr()} · 8个项目自由填写 · 每天自动清零并按月累计</p>
+ <div class="card">
+   <div id="mitems"></div>
+   <div class="row" style="justify-content:space-between;margin-top:12px;border-top:1.5px dashed #f6dcea;padding-top:12px">
+     <span class="total">今日营业额</span><span class="big">¥${dayTotal.toFixed(2)}</span>
+   </div>
+   <div class="batch" style="margin:12px 0 0">
+     <button class="btn green sm" id="saveMoney">💾 保存今日记录</button>
+     <button class="btn red sm" id="clearDay">清空今日</button>
+   </div>
+ </div>
+ <div class="card"><h1 style="font-size:14px">📅 月度总金额</h1><div style="margin-top:8px">${monthHtml}</div></div>`;
+ const box=mainEl.querySelector('#mitems');
+ items.forEach((it,i)=>{
+   const d=document.createElement('div');d.className='money-item';
+   d.innerHTML=`<span class="idx">${i+1}</span>
+   <input placeholder="项目名称" value="${it.name||''}">
+   <input class="amt" type="number" inputmode="decimal" placeholder="金额" value="${it.amt||''}">`;
+   d.children[1].oninput=e=>{it.name=e.target.value;save();};
+   d.children[2].oninput=e=>{it.amt=e.target.value;save();renderMoney();};
+   box.appendChild(d);
+ });
+ mainEl.querySelector('#saveMoney').onclick=()=>{save();toast('今日营业额已保存 ¥'+items.reduce((s,x)=>s+(parseFloat(x.amt)||0),0).toFixed(2));};
+ mainEl.querySelector('#clearDay').onclick=()=>{if(confirm('确认清空今日记录？')){DB.money.items=items.map(()=>({name:'',amt:''}));save();renderMoney();}};
+}
+
+/* ---------------- 4. 充值会员记录 ---------------- */
+function renderMember(){
+ mainEl.innerHTML=`
+ <h1>💳 充值会员记录</h1>
+ <p style="font-size:13px;color:var(--muted);margin-bottom:12px">随时填写 · 自动保存 · 支持按名字搜索</p>
+ <div class="card">
+   <div class="row" style="margin-bottom:10px">
+     <input id="mSearch" placeholder="🔍 输入会员名字搜索">
+     <span id="mSearchTip" style="font-size:12px;color:var(--muted)"></span>
+   </div>
+   <div class="scrollbox" id="mScroll"><table class="mtable">
+   <thead><tr><th style="width:90px">会员名称</th><th style="width:110px">充值时间</th><th>消费内容</th><th style="width:110px">消费时间</th><th style="width:90px">剩余金额</th><th class="sig">确认签字</th><th style="width:40px"></th></tr></thead>
+   <tbody id="mtb"></tbody></table></div>
+   <div class="batch" style="margin:12px 0 0">
+     <button class="btn green sm" id="addRow">＋ 新增一行</button>
+     <button class="btn sm" id="add5">＋ 一次加5行</button>
+     <button class="btn red sm" id="delAll">清空全部记录</button>
+   </div>
+ </div>`;
+ const tb=mainEl.querySelector('#mtb');
+ function addRow(){
+   DB.members.push({name:'',recharge:'',content:'',consume:'',balance:'',sign:''});
+   save();
+ }
+ if(!DB.members.length){addRow();addRow();addRow();}
+ function paint(){
+   tb.innerHTML='';
+   DB.members.forEach((r,i)=>{
+     const tr=document.createElement('tr');
+     const cell=(k,ph)=>`<td><input type="text" placeholder="${ph}" value="${r[k]||''}" data-k="${k}" data-i="${i}"></td>`;
+     tr.innerHTML=cell('name','会员名称')+cell('recharge','如 2026-01-01 14:00')+cell('content','消费/充值内容')+cell('consume','消费时间')+cell('balance','剩余金额')+cell('sign','签字')+`<td><button class="btn red sm" data-del="${i}" style="padding:2px 8px">删</button></td>`;
+     tr.querySelectorAll('input').forEach(inp=>{
+       inp.oninput=()=>{DB.members[+inp.dataset.i][inp.dataset.k]=inp.value;save();};
+     });
+     tr.querySelector('[data-del]').onclick=e=>{DB.members.splice(+e.target.dataset.del,1);save();paint();};
+     tb.appendChild(tr);
+   });
+ }
+ paint();
+ const searchBox=mainEl.querySelector('#mSearch'),tip=mainEl.querySelector('#mSearchTip'),scroll=mainEl.querySelector('#mScroll');
+ searchBox.oninput=()=>{
+   const q=searchBox.value.trim().toLowerCase();
+   tb.querySelectorAll('tr').forEach(tr=>tr.style.background='');
+   tip.textContent='';
+   if(!q)return;
+   const hits=[];
+   DB.members.forEach((r,i)=>{if((r.name||'').toLowerCase().includes(q))hits.push(i);});
+   if(!hits.length){tip.textContent='未找到该会员';return;}
+   tip.textContent=`找到 ${hits.length} 条记录`;
+   const tr=tb.children[hits[0]];
+   tr.style.background='#ffd9ec';
+   scroll.scrollTop=tr.offsetTop-scroll.offsetTop-4;
+ };
+ mainEl.querySelector('#addRow').onclick=()=>{addRow();paint();};
+ mainEl.querySelector('#add5').onclick=()=>{for(let i=0;i<5;i++)addRow();paint();};
+ mainEl.querySelector('#delAll').onclick=()=>{if(confirm('确认清空全部会员记录？')){DB.members=[];save();renderMember();}};
+}
+
+render();
+</script>
+</body>
+</html>
