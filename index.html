@@ -141,9 +141,9 @@ function note(freq,start,dur){
  o2.connect(g2);g2.connect(c.destination);
  o.start(t);o.stop(t+dur);o2.start(t);o2.stop(t+dur);
 }
-/* 柔和之光风格：舒缓、温暖的下行与上行交织，节奏放慢更柔和 */
-const MELODY=[523.25,659.25,783.99,880,783.99,659.25,523.25,440]; // C5 E5 G5 A5 G5 E5 C5 A4
-const STEP=0.62;   // 每音间隔（秒），放慢更温柔
+/* Morning Coffee 风格：咖啡馆般的温暖慵懒，F大七和弦色彩，节奏舒缓 */
+const MELODY=[349.23,440,523.25,659.25,587.33,523.25,440,349.23]; // F4 A4 C5 E5 D5 C5 A4 F4
+const STEP=0.70;   // 每音间隔（秒），放慢更慵懒
 function chime(repeat){
  const r=repeat||2;
  const total=MELODY.length*STEP+0.6;
