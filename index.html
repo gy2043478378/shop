@@ -114,7 +114,20 @@ DB.money=DB.money||{date:null,items:Array.from({length:8},()=>({name:'',amt:''})
 DB.members=DB.members||[];
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1800);}
-function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.3;o.start();o.stop(c.currentTime+.6);}catch(e){}}
+function beep(dur){
+ try{
+   const c=new (window.AudioContext||window.webkitAudioContext)();
+   const o=c.createOscillator(),g=c.createGain();
+   o.connect(g);g.connect(c.destination);
+   o.type='sine';o.frequency.value=880;g.gain.value=.35;
+   o.start();o.stop(c.currentTime+(dur||0.8));
+ }catch(e){}
+}
+/* 长提醒：连续响铃多次 + 手机震动 */
+function alarm(times,dur){
+ for(let i=0;i<(times||3);i++)setTimeout(()=>beep(dur||1),i*1200);
+ if(navigator.vibrate)navigator.vibrate([400,200,400,200,400]);
+}
 
 /* ---------------- 导航 ---------------- */
 const PAGES=[
@@ -217,8 +230,8 @@ function renderTimer(){
    DB.timers.forEach(t=>{
      if(t.running){
        t.remain--;changed=true;
-       if(t.remain===600){beep();setTimeout(beep,500);toast('🔔 注意：还有10分钟就到时间啦！');}
-       if(t.remain<=0){t.running=false;beep();setTimeout(beep,700);toast('⏰ 倒计时结束！本轮时间到');}
+       if(t.remain===600){alarm(3,1);toast('🔔 注意：还有10分钟就到时间啦！');}
+       if(t.remain<=0){t.running=false;alarm(5,1);toast('⏰ 倒计时结束！本轮时间到');}
      }
    });
    if(changed){save();
