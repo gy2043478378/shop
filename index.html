@@ -245,6 +245,10 @@ function renderRestock(){
    <span class="total">已标记：<b id="rCount">0</b> 色</span>
    <span class="total">总需补数量：<b id="rSum">0</b> 颗</span>
  </div>
+ <div class="card row">
+   <input id="rSearch" placeholder="🔍 输入色号搜索，如 A3 或 12" style="flex:1;border-radius:999px">
+   <span id="rSearchTip" style="font-size:12px;color:var(--muted)"></span>
+ </div>
  <div class="batch">
    <button class="btn green sm" id="exportCsv">⬇ 导出表格(CSV)</button>
    <button class="btn red sm" id="clearAll">一键清空填写内容</button>
@@ -274,6 +278,21 @@ function renderRestock(){
    mainEl.querySelector('#rSum').textContent=sum;
  }
  updateCount();
+ // 搜索色号：输入字母或数字，跳转到对应行并高亮
+ const rSearch=mainEl.querySelector('#rSearch'),rTip=mainEl.querySelector('#rSearchTip'),rScroll=mainEl.querySelector('.scrollbox');
+ rSearch.oninput=()=>{
+   const q=rSearch.value.trim().toUpperCase();
+   tb.querySelectorAll('tr').forEach(tr=>tr.style.background='');
+   rTip.textContent='';
+   if(!q)return;
+   const idx=codes.findIndex(c=>c===q||c.slice(1)===q);
+   const hits=idx>=0?[idx]:codes.map((c,i)=>({c,i})).filter(x=>x.c.includes(q)).map(x=>x.i);
+   if(!hits.length){rTip.textContent='未找到该色号';return;}
+   rTip.textContent=idx>=0?'已定位':`找到 ${hits.length} 个色号`;
+   const tr=tb.children[hits[0]];
+   tr.style.background='#ffd9ec';
+   rScroll.scrollTop=tr.offsetTop-rScroll.offsetTop-4;
+ };
  mainEl.querySelector('#clearAll').onclick=()=>{
    if(!confirm('确认清空所有勾选、数量和备注？（221色系列结构保留）'))return;
    DB.restock={};save();renderRestock();toast('已一键清空');
