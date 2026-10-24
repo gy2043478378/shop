@@ -114,19 +114,44 @@ DB.money=DB.money||{date:null,items:Array.from({length:8},()=>({name:'',amt:''})
 DB.members=DB.members||[];
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1800);}
-function beep(dur){
- try{
-   const c=new (window.AudioContext||window.webkitAudioContext)();
-   const o=c.createOscillator(),g=c.createGain();
-   o.connect(g);g.connect(c.destination);
-   o.type='sine';o.frequency.value=880;g.gain.value=.35;
-   o.start();o.stop(c.currentTime+(dur||0.8));
- }catch(e){}
+/* 温柔音乐铃声：柔和正弦音 + 渐入渐出，像风铃一样 */
+let audioCtx=null;
+function getCtx(){
+ if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+ if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+ return audioCtx;
 }
-/* 长提醒：连续响铃多次 + 手机震动 */
-function alarm(times,dur){
- for(let i=0;i<(times||3);i++)setTimeout(()=>beep(dur||1),i*1200);
- if(navigator.vibrate)navigator.vibrate([400,200,400,200,400]);
+function note(freq,start,dur){
+ const c=getCtx();if(!c)return;
+ const o=c.createOscillator(),g=c.createGain();
+ o.type='sine';o.frequency.value=freq;
+ const t=c.currentTime+start;
+ // 柔和包络：渐入 → 保持 → 渐出
+ g.gain.setValueAtTime(0,t);
+ g.gain.linearRampToValueAtTime(.28,t+.08);
+ g.gain.linearRampToValueAtTime(.22,t+dur*.6);
+ g.gain.linearRampToValueAtTime(0,t+dur);
+ // 加一个高八度泛音，音色更清亮温柔
+ const o2=c.createOscillator(),g2=c.createGain();
+ o2.type='sine';o2.frequency.value=freq*2;
+ g2.gain.setValueAtTime(0,t);
+ g2.gain.linearRampToValueAtTime(.06,t+.1);
+ g2.gain.linearRampToValueAtTime(0,t+dur);
+ o.connect(g);g.connect(c.destination);
+ o2.connect(g2);g2.connect(c.destination);
+ o.start(t);o.stop(t+dur);o2.start(t);o2.stop(t+dur);
+}
+const MELODY=[659.25,783.99,987.77,1318.51];  // E5 G5 B5 E6 柔和上行
+function chime(repeat){
+ const r=repeat||2;
+ for(let k=0;k<r;k++){
+   MELODY.forEach((f,i)=>note(f,k*2.2+i*0.45,0.9));
+ }
+}
+/* 温柔提醒：音乐 + 轻微震动 */
+function alarm(times){
+ chime(times||2);
+ if(navigator.vibrate)navigator.vibrate([500,200,500]);
 }
 
 /* ---------------- 导航 ---------------- */
@@ -230,8 +255,8 @@ function renderTimer(){
    DB.timers.forEach(t=>{
      if(t.running){
        t.remain--;changed=true;
-       if(t.remain===600){alarm(3,1);toast('🔔 注意：还有10分钟就到时间啦！');}
-       if(t.remain<=0){t.running=false;alarm(5,1);toast('⏰ 倒计时结束！本轮时间到');}
+       if(t.remain===600){alarm(2);toast('🔔 注意：还有10分钟就到时间啦！');}
+       if(t.remain<=0){t.running=false;alarm(3);toast('⏰ 倒计时结束！本轮时间到');}
      }
    });
    if(changed){save();
