@@ -173,7 +173,11 @@ function renderTimer(){
    d.className='tcard'+(t.running?' running':(finished?' done60':''));
    d.innerHTML=`<span class="tnum">${i+1}</span><span class="tbadge ${st}">${stTxt}</span>
    <div class="ttime" style="${finished?'color:var(--purple)':''}">${fmtHTML(Math.max(0,t.remain))}</div>
-   <div class="tsub">本轮时长 ${Math.round(t.dur/60)} 分钟 · 已用 ${Math.max(0,Math.floor(used/60))} 分钟</div>
+   <div class="tsub" style="display:flex;align-items:center;gap:6px;justify-content:center">
+     <span>本轮时长</span>
+     <input class="setmin" type="number" min="1" max="720" inputmode="numeric" value="${Math.round(t.dur/60)}" style="width:64px;text-align:center;padding:4px;border-radius:8px;border:1.5px solid #f3cfdf;font-weight:bold;color:var(--pinkD)">
+     <span>分钟</span>
+   </div>
    <div class="tbtns">
      <button class="${t.running?'bpause':'bstart'}" data-a="toggle">${finished?'↻ 再来一轮':(t.running?'⏸ 暂停':'▶ 开始')}</button>
      <button class="brst" data-a="reset">↺</button>
@@ -195,6 +199,12 @@ function renderTimer(){
      t.remain=Math.max(0,Math.min(t.dur,t.remain+v));
      save();paintCard(d,t,i);
    });
+   d.querySelector('.setmin').onchange=e=>{
+     const m=Math.max(1,Math.min(720,parseInt(e.target.value)||60));
+     t.dur=m*60;t.remain=m*60;t.running=false;
+     save();paintCard(d,t,i);
+     toast('已设为 '+m+' 分钟倒计时');
+   };
  }
  DB.timers.forEach((t,i)=>{
    const d=document.createElement('div');paintCard(d,t,i);grid.appendChild(d);
@@ -207,7 +217,7 @@ function renderTimer(){
    DB.timers.forEach(t=>{
      if(t.running){
        t.remain--;changed=true;
-       if(t.remain===60){beep();toast('🔔 还剩最后1分钟！');}
+       if(t.remain===600){beep();setTimeout(beep,500);toast('🔔 注意：还有10分钟就到时间啦！');}
        if(t.remain<=0){t.running=false;beep();setTimeout(beep,700);toast('⏰ 倒计时结束！本轮时间到');}
      }
    });
