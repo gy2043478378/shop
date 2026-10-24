@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="手作店">
 <meta name="theme-color" content="#f4a7c8">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href='data:application/manifest+json,{"name":"手作店工作台","short_name":"手作店","start_url":".","display":"standalone","background_color":"%23fdeef5","theme_color":"%23f4a7c8"}'>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f4a7c8'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E🧩%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f4a7c8'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E🧩%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
   --bg1:#fce3ee; --bg2:#fdeef5; --bg3:#fff5f9;
@@ -384,6 +384,12 @@ function renderMember(){
 }
 
 render();
+/* PWA：注册离线缓存，支持「安装应用」 */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
