@@ -108,7 +108,7 @@ tr.filled td{background:var(--pinkXL)}
 const LS='handmade_shop_v1';
 let DB=JSON.parse(localStorage.getItem(LS)||'{}');
 function save(){localStorage.setItem(LS,JSON.stringify(DB));}
-DB.timers=DB.timers||[]; for(let i=0;i<30;i++) if(!DB.timers[i]) DB.timers[i]={sec:0,running:false,over:false};
+DB.timers=DB.timers||[]; for(let i=0;i<30;i++) if(!DB.timers[i]||DB.timers[i].remain===undefined) DB.timers[i]={dur:3600,remain:3600,running:false};
 DB.restock=DB.restock||{};
 DB.money=DB.money||{date:null,items:Array.from({length:8},()=>({name:'',amt:''})),month:{}};
 DB.members=DB.members||[];
@@ -141,21 +141,22 @@ function render(){
  if(cur==='member')renderMember();
 }
 
-/* ---------------- 1. 拼豆计时器 ---------------- */
+/* ---------------- 1. 拼豆计时器（倒计时模式） ---------------- */
 let globalTick=null;
-function fmtHTML(s){const m=Math.floor(s/60),ss=s%60;
- return String(m).padStart(3,'0')+':<span class="sec">'+String(ss).padStart(2,'0')+'</span>';}
+function fmtHTML(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;
+ const mm=String(h>0?m:m).padStart(h>0?2:3,'0');
+ return (h>0?h+':':'')+mm+':<span class="sec">'+String(ss).padStart(2,'0')+'</span>';}
 function renderTimer(){
  const running=DB.timers.filter(t=>t.running).length;
- const paused=DB.timers.filter(t=>!t.running&&t.sec>0&&Math.floor(t.sec/60)<720).length;
- const done=DB.timers.filter(t=>Math.floor(t.sec/60)>=60).length;
+ const paused=DB.timers.filter(t=>!t.running&&t.remain>0&&t.remain<t.dur).length;
+ const done=DB.timers.filter(t=>t.remain<=0).length;
  mainEl.innerHTML=`
  <h1>⏱ 拼豆计时器</h1>
- <p style="font-size:13px;color:var(--muted);margin-bottom:12px">30个工位计时 · 满60分钟提醒 · 可累计至12小时</p>
+ <p style="font-size:13px;color:var(--muted);margin-bottom:12px">30个工位倒计时 · 默认60分钟/轮 · 到点自动提醒 · ±分键调整时长</p>
  <div class="stats">
    <div class="stat"><div class="n">${running}</div><div class="l">运行中</div></div>
    <div class="stat"><div class="n">${paused}</div><div class="l">已暂停</div></div>
-   <div class="stat"><div class="n">${done}</div><div class="l">已满60分</div></div>
+   <div class="stat"><div class="n">${done}</div><div class="l">已完成</div></div>
  </div>
  <div class="batch">
    <button class="btn green sm" id="allStart">▶ 全部开始</button>
@@ -165,15 +166,16 @@ function renderTimer(){
  <div id="timers"></div>`;
  const grid=mainEl.querySelector('#timers');
  function paintCard(d,t,i){
-   const mins=Math.floor(t.sec/60);
-   const st=t.running?'run':(mins>=60?'ok':'wait');
-   const stTxt=t.running?'计时中':(mins>=60?'已满60分':'待开始');
-   d.className='tcard'+(t.running?' running':(mins>=60?' done60':''));
+   const finished=t.remain<=0;
+   const st=t.running?'run':(finished?'done':'wait');
+   const stTxt=t.running?'倒计时中':(finished?'⏰ 时间到':'待开始');
+   const used=t.dur-t.remain;
+   d.className='tcard'+(t.running?' running':(finished?' done60':''));
    d.innerHTML=`<span class="tnum">${i+1}</span><span class="tbadge ${st}">${stTxt}</span>
-   <div class="ttime">${fmtHTML(t.sec)}</div>
-   <div class="tsub">已累计 ${mins} 分钟</div>
+   <div class="ttime" style="${finished?'color:var(--purple)':''}">${fmtHTML(Math.max(0,t.remain))}</div>
+   <div class="tsub">本轮时长 ${Math.round(t.dur/60)} 分钟 · 已用 ${Math.max(0,Math.floor(used/60))} 分钟</div>
    <div class="tbtns">
-     <button class="${t.running?'bpause':'bstart'}" data-a="toggle">${t.running?'⏸ 暂停':'▶ 开始'}</button>
+     <button class="${t.running?'bpause':'bstart'}" data-a="toggle">${finished?'↻ 再来一轮':(t.running?'⏸ 暂停':'▶ 开始')}</button>
      <button class="brst" data-a="reset">↺</button>
    </div>
    <div class="adj">
@@ -181,34 +183,32 @@ function renderTimer(){
      <button data-adj="-1">-1分</button><button data-adj="1">+1分</button>
    </div>`;
    d.querySelector('[data-a=toggle]').onclick=()=>{
-     if(!t.running){
-       if(mins>=720){toast('该位置已记录满12小时，请重置后重新开始');return;}
-       t.running=true;
-     } else t.running=false;
+     if(finished){
+       t.remain=t.dur;t.running=true;toast('第 '+t.dur/60+' 分钟新一轮倒计时开始');
+     } else t.running=!t.running;
      save();paintCard(d,t,i);
    };
-   d.querySelector('[data-a=reset]').onclick=()=>{t.sec=0;t.running=false;t.over=false;save();paintCard(d,t,i);};
+   d.querySelector('[data-a=reset]').onclick=()=>{t.remain=t.dur;t.running=false;save();paintCard(d,t,i);};
    d.querySelectorAll('[data-adj]').forEach(b=>b.onclick=()=>{
      const v=parseInt(b.dataset.adj)*60;
-     t.sec=Math.max(0,Math.min(720*60,t.sec+v));
-     if(t.sec>=720*60)t.running=false;
+     t.dur=Math.max(60,Math.min(720*60,t.dur+v));
+     t.remain=Math.max(0,Math.min(t.dur,t.remain+v));
      save();paintCard(d,t,i);
    });
  }
  DB.timers.forEach((t,i)=>{
    const d=document.createElement('div');paintCard(d,t,i);grid.appendChild(d);
  });
- mainEl.querySelector('#allStart').onclick=()=>{DB.timers.forEach(t=>{if(Math.floor(t.sec/60)<720)t.running=true;});save();renderTimer();};
+ mainEl.querySelector('#allStart').onclick=()=>{DB.timers.forEach(t=>{if(t.remain>0)t.running=true;});save();renderTimer();};
  mainEl.querySelector('#allPause').onclick=()=>{DB.timers.forEach(t=>t.running=false);save();renderTimer();};
- mainEl.querySelector('#allReset').onclick=()=>{if(confirm('确认重置全部30个计时器？')){DB.timers.forEach(t=>{t.sec=0;t.running=false;t.over=false;});save();renderTimer();}};
+ mainEl.querySelector('#allReset').onclick=()=>{if(confirm('确认重置全部30个倒计时？')){DB.timers.forEach(t=>{t.remain=t.dur;t.running=false;});save();renderTimer();}};
  globalTick=setInterval(()=>{
    let changed=false;
    DB.timers.forEach(t=>{
      if(t.running){
-       t.sec++;changed=true;
-       const m=Math.floor(t.sec/60);
-       if(m>0&&t.sec%60===0&&m<=720){beep();toast('🔔 已满60分钟！继续记录中…');t.over=true;}
-       if(m>=720){t.running=false;toast('⏰ 已记录满12小时，自动停止');}
+       t.remain--;changed=true;
+       if(t.remain===60){beep();toast('🔔 还剩最后1分钟！');}
+       if(t.remain<=0){t.running=false;beep();setTimeout(beep,700);toast('⏰ 倒计时结束！本轮时间到');}
      }
    });
    if(changed){save();
@@ -216,8 +216,8 @@ function renderTimer(){
      const st=mainEl.querySelectorAll('.stat .n');
      if(st.length===3){
        st[0].textContent=DB.timers.filter(t=>t.running).length;
-       st[1].textContent=DB.timers.filter(t=>!t.running&&t.sec>0&&Math.floor(t.sec/60)<720).length;
-       st[2].textContent=DB.timers.filter(t=>Math.floor(t.sec/60)>=60).length;
+       st[1].textContent=DB.timers.filter(t=>!t.running&&t.remain>0&&t.remain<t.dur).length;
+       st[2].textContent=DB.timers.filter(t=>t.remain<=0).length;
      }
    }
  },1000);
