@@ -141,16 +141,29 @@ function note(freq,start,dur){
  o2.connect(g2);g2.connect(c.destination);
  o.start(t);o.stop(t+dur);o2.start(t);o2.stop(t+dur);
 }
-const MELODY=[659.25,783.99,987.77,1318.51];  // E5 G5 B5 E6 柔和上行
+/* 柔和之光风格：舒缓、温暖的下行与上行交织，节奏放慢更柔和 */
+const MELODY=[523.25,659.25,783.99,880,783.99,659.25,523.25,440]; // C5 E5 G5 A5 G5 E5 C5 A4
+const STEP=0.62;   // 每音间隔（秒），放慢更温柔
 function chime(repeat){
  const r=repeat||2;
+ const total=MELODY.length*STEP+0.6;
  for(let k=0;k<r;k++){
-   MELODY.forEach((f,i)=>note(f,k*2.2+i*0.45,0.9));
+   MELODY.forEach((f,i)=>note(f,k*total+i*STEP,1.5));
  }
+}
+/* 如有自定义音乐文件 ring.mp3，则优先播放该文件 */
+let customAudio=null;
+function playCustom(){
+ if(!customAudio){
+   customAudio=new Audio('ring.mp3');
+   customAudio.volume=0.8;
+ }
+ customAudio.currentTime=0;
+ return customAudio.play().then(()=>true).catch(()=>false);
 }
 /* 温柔提醒：音乐 + 轻微震动 */
 function alarm(times){
- chime(times||2);
+ playCustom().then(played=>{if(!played)chime(times||2);});
  if(navigator.vibrate)navigator.vibrate([500,200,500]);
 }
 
