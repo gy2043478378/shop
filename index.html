@@ -251,11 +251,6 @@ function renderTimer(){
    <button class="btn line sm" id="allReset">↺ 全部重置</button>
    <button class="btn sm" id="testRing" style="background:linear-gradient(135deg,#c9b3e8,#9f86cf)">🔔 试听铃声</button>
  </div>
- <div class="card">
-   <div style="font-size:12px;color:var(--muted);margin-bottom:6px">提醒音乐（可直接点 ▶ 播放确认有声）</div>
-   <audio id="ringPlayer" src="ring.mp3" controls preload="auto" style="width:100%"></audio>
-   <div id="ringDiag" style="font-size:12px;color:var(--muted);margin-top:6px">检测中…</div>
- </div>
  <div id="timers"></div>`;
  const grid=mainEl.querySelector('#timers');
  function paintCard(d,t,i){
@@ -305,17 +300,10 @@ function renderTimer(){
  mainEl.querySelector('#allStart').onclick=()=>{DB.timers.forEach(t=>{if(t.remain>0)t.running=true;});save();renderTimer();};
  mainEl.querySelector('#allPause').onclick=()=>{DB.timers.forEach(t=>t.running=false);save();renderTimer();};
  mainEl.querySelector('#allReset').onclick=()=>{if(confirm('确认重置全部30个倒计时？')){DB.timers.forEach(t=>{t.remain=t.dur;t.running=false;});save();renderTimer();}};
- const rp=mainEl.querySelector('#ringPlayer'),diag=mainEl.querySelector('#ringDiag');
- function diagTxt(){return '状态：'+(rp.error?'❌ 加载失败(错误码'+rp.error.code+')':(rp.readyState>=2?'✅ 音乐已就绪':'⏳ 加载中(readyState='+rp.readyState+')'))+' · 时长'+(rp.duration?Math.round(rp.duration)+'秒':'未知');}
- rp.onloadeddata=()=>{diag.textContent=diagTxt();};
- rp.onerror=()=>{diag.textContent=diagTxt();};
- rp.oncanplay=()=>{diag.textContent=diagTxt();};
- setTimeout(()=>{diag.textContent=diagTxt();},1500);
  mainEl.querySelector('#testRing').onclick=()=>{
    alarmBell(2);
    if(navigator.vibrate)navigator.vibrate([600,200,600]);
    toast('🔔 闹铃测试：叮铃铃');
-   diag.textContent=diagTxt();
  };
  globalTick=setInterval(()=>{
    let changed=false;
